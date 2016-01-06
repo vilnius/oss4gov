@@ -55,15 +55,10 @@ Reikalavimai
 Naudojimas
 ==========
 
-Pirmiausia įdiegite sisteminius paketus, kurie reikalingi tam, kad
-konfigūravimo priemonė esanti šioje repozitorijoje veiktų::
+Tam, kad paruoštumėte Vilniaus savivaldybės darbuotojo kompiuterį darbui reikia
+įvykdyti šią vieną komandą::
 
-    sudo apt install python-pip
-    sudo pip install ansible
-
-Tada kompiuterio konfigūravimą galite atlikti taip::
-
-    ansible-playbook setup.yml
+  (cd /tmp && wget -qO- https://github.com/vilnius/oss4gov/archive/master.tar.gz | tar -xvzpf- && ./oss4gov-master/oss4gov.sh)
 
 Ubuntu diegimas
 ===============
@@ -79,18 +74,3 @@ naudotojo duomenys. Vėliau, diegiant naujesnę versiją, naudotojo duomenys bus
 išsaugoti, o sistemos skirsnis įrašytas iš naujo.
 
 .. _suderinamas su kompiuterio aparatine įranga: http://www.ubuntu.com/certification/desktop/
-
-
-Konfigūravimo priemonės testavimas
-==================================
-
-Norint įsitikinti ar konfigūravimo priemonė veikia, galite ištestuoti jos
-veikimą taip::
-
-  vagrant up
-
-Arba::
-
-  vagrant provision
-
-Leidžiant testus antrą kartą.
