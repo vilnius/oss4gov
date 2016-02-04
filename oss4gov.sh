@@ -12,7 +12,7 @@ cat templates/nsswitch.conf > /etc/nsswitch.conf
 # install software
 export DEBIAN_FRONTEND=noninteractive  
 apt-get update > /dev/null
-apt-get install -fqqy -o Dpkg::Options::='--force-confold' winbind samba krb5-user
+apt-get install -fqqy -o Dpkg::Options::='--force-confold' winbind samba krb5-user libnss-winbind libpam-winbind
 
 # join the AD
 kinit ${DOMAMD}
