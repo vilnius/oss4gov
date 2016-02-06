@@ -6,18 +6,8 @@
     workgroup: VILNIUS
     realm: VILNIUS.VILNIUS.LT
     dc: DC1.VILNIUS.VILNIUS.LT
-
-  vars_prompt:
-
-  - name: domadm
-    prompt: "Enter Active Directory admin credentials.\nIf you
-             are not Active Directory admin, leave username and
-             password fields emtpy.\n\nadmin username"
-    private: no
-
-  - name: domadm_password
-    prompt: password
-    private: yes
+    domadm: ""
+    domadm_password: "{{ lookup('env','DOMADM_PASSWORD') }}"
 
   tasks:
 
@@ -44,7 +34,7 @@
     command: net ads join -S "{{ dc }}" -U "{{ domadm }}@{{ realm }}"%"domadm_password"
     args: {creates: /etc/krb5.keytab}
     register: samba
-    when: domadm_password != ""
+    when: domadm != ""
 
   - name: create Kerberos ticket
     command: kinit -k -t /etc/krb5.keytab "{{ domadm }}@{{ realm }}"

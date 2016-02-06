@@ -23,6 +23,7 @@ import oss4gov
 def test_main(mocker):
     mocker.patch('os.environ', {})
     mocker.patch('os.getuid', return_value=0)
+    mocker.patch('getpass.getpass', return_value='secret')
     check_call = mocker.patch('subprocess.check_call')
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -33,6 +34,9 @@ def test_main(mocker):
 
         # Second time run
         oss4gov.main(['-p', path])
+
+        # With admin
+        oss4gov.main(['-p', path, '--admin', 'admin'])
 
     call = mock.call
 
@@ -50,6 +54,14 @@ def test_main(mocker):
         call(['apt-get', 'install', '-y', 'ansible'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
         call(
             ['ansible-playbook', '--connection=local', '--inventory=localhost,', 'vmsa.yml'],
-            cwd=os.path.join(path, 'oss4gov-master'), env={'ANSIBLE_NOCOWS': '1'},
+            cwd=path, env={'ANSIBLE_NOCOWS': '1'},
+        ),
+
+        # With admin
+        call(['apt-get', 'install', '-y', 'ansible'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
+        call(
+            ['ansible-playbook', '--connection=local', '--inventory=localhost,',
+             '--extra-vars={"domadm": "admin"}', 'vmsa.yml'],
+            cwd=path, env={'ANSIBLE_NOCOWS': '1', 'DOMADM_PASSWORD': 'secret'},
         ),
     ]

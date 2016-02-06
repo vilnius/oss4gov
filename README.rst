@@ -58,7 +58,7 @@ Naudojimas
 Tam, kad paruoštumėte Vilniaus savivaldybės darbuotojo kompiuterį darbui reikia
 įvykdyti šią vieną komandą::
 
-    wget -qO- https://raw.githubusercontent.com/vilnius/oss4gov/master/oss4gov.sh | sudo python3
+    wget -qO- https://raw.githubusercontent.com/vilnius/oss4gov/master/oss4gov.py | sudo python3
 
 Ubuntu diegimas
 ===============

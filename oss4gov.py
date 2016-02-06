@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import getpass
+import json
 import os
 import os.path
 import subprocess
@@ -9,7 +11,8 @@ import sys
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--path', default='/tmp/oss4gov')
+    parser.add_argument('-p', '--path', default='')
+    parser.add_argument('--admin', help="Active Directory admin user name")
     args = parser.parse_args(argv)
 
     if os.getuid() != 0:
@@ -22,25 +25,33 @@ def main(argv=None):
         env=dict(os.environ, DEBIAN_FRONTEND='noninteractive'),
     )
 
+    path = args.path or '/tmp/oss4gov'
+
     # Get playbook
-    if not os.path.exists(args.path):
-        os.mkdir(args.path)
+    if not os.path.exists(path):
+        os.mkdir(path)
         dlurl = 'https://github.com/vilnius/oss4gov/archive/master.tar.gz'
-        subprocess.check_call(['wget', dlurl], cwd=args.path)
-        subprocess.check_call(['tar', '-xvzpf', 'master.tar.gz'], cwd=args.path)
+        subprocess.check_call(['wget', dlurl], cwd=path)
+        subprocess.check_call(['tar', '-xvzpf', 'master.tar.gz'], cwd=path)
+        path = os.path.join(path, 'oss4gov-master')
 
     # Run playbook
-    ansible_command = [
+    env = dict(os.environ, ANSIBLE_NOCOWS='1')
+    extra = None
+
+    if args.admin:
+        extra = json.dumps({'domadm': args.admin}, sort_keys=True)
+        env['DOMADM_PASSWORD'] = getpass.getpass('%s password:' % args.admin)
+
+    ansible_command = list(filter(None, [
         'ansible-playbook',
         '--connection=local',
         '--inventory=localhost,',
+        (('--extra-vars=%s' % extra) if extra else None),
         'vmsa.yml',
-    ]
-    subprocess.check_call(
-        ansible_command,
-        cwd=os.path.join(args.path, 'oss4gov-master'),
-        env=dict(os.environ, ANSIBLE_NOCOWS='1'),
-    )
+    ]))
+
+    subprocess.check_call(ansible_command, cwd=path, env=env)
 
 
 if __name__ == "__main__":
