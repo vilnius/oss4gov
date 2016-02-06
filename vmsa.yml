@@ -1,0 +1,65 @@
+---
+- hosts: all
+  sudo: yes
+
+  vars:
+    workgroup: VILNIUS
+    realm: VILNIUS.VILNIUS.LT
+    dc: DC1.VILNIUS.VILNIUS.LT
+
+  vars_prompt:
+
+  - name: domadm
+    prompt: "Enter Active Directory admin credentials.\nIf you
+             are not Active Directory admin, leave username and
+             password fields emtpy.\n\nadmin username"
+    private: no
+
+  - name: domadm_password
+    prompt: password
+    private: yes
+
+  tasks:
+
+  - name: apt packages
+    apt: pkg={{ item }} state=latest
+    with_items:
+    - winbind
+    - samba
+    - krb5-user
+    - libnss-winbind
+    - libpam-winbind
+
+  - name: update configuration files
+    template: src={{ item.src }} dest={{ item.dest }}
+    with_items:
+    - {src: templates/krb5.conf, dest: /etc/krb5.conf}
+    - {src: templates/smb.conf, dest: /etc/samba/smb.conf}
+    - {src: templates/nsswitch.conf, dest: /etc/nsswitch.conf}
+    notify:
+    - restart winbind
+    - restart samba
+
+  - name: join AD with Samba
+    command: net ads join -S "{{ dc }}" -U "{{ domadm }}@{{ realm }}"%"domadm_password"
+    args: {creates: /etc/krb5.keytab}
+    register: samba
+    when: domadm_password != ""
+
+  - name: create Kerberos ticket
+    command: kinit -k -t /etc/krb5.keytab "{{ domadm }}@{{ realm }}"
+    args: {creates: /tmp/krb5cc_0}
+    when: not samba|skipped
+
+  - name: fix pam for AD integration
+    command: pam-auth-update --force --package
+
+  - template: src=templates/common-session dest=/etc/pam.d/common-session
+
+  handlers:
+
+  - name: restart winbind
+    service: name=winbind state=restarted
+
+  - name: restart samba
+    service: name=samba state=restarted
